@@ -4,45 +4,47 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/bruno-anjos/scheduler/api"
 	"github.com/bruno-anjos/solution-utils/http_utils"
 )
 
 // Route names
 const (
-	startContainerName = "START_CONTAINER"
-	stopContainerName  = "STOP_CONTAINER"
+	startInstanceName = "START_INSTANCE"
+	stopInstanceName  = "STOP_INSTANCE"
+	stopAllInstancesName  = "STOP_ALL_INSTANCES"
 )
 
-// Paths
 const (
-	PrefixPath = "/scheduler"
-
-	ContainerPath = "/containers/%s"
-)
-
-// Path variables
-const (
-	containerIdPathVar = "containerId"
+	instanceIdPathVar = "instanceId"
 )
 
 var (
-	_containerIdPathVarFormatted = fmt.Sprintf(http_utils.PathVarFormat, containerIdPathVar)
+	_instanceIdPathVarFormatted = fmt.Sprintf(http_utils.PathVarFormat, instanceIdPathVar)
 
-	containerRoute = fmt.Sprintf(ContainerPath, _containerIdPathVarFormatted)
+	instancesRoute = api.InstancesPath
+	instanceRoute  = fmt.Sprintf(api.InstancePath, _instanceIdPathVarFormatted)
 )
 
 var routes = []http_utils.Route{
 	{
-		Name:        startContainerName,
+		Name:        startInstanceName,
 		Method:      http.MethodPost,
-		Pattern:     containerRoute,
-		HandlerFunc: startContainerHandler,
+		Pattern:     instancesRoute,
+		HandlerFunc: startInstanceHandler,
 	},
 
-	/*{
-		Name:        stopContainerName,
+	{
+		Name:        stopInstanceName,
 		Method:      http.MethodDelete,
-		Pattern:     containerRoute,
-		HandlerFunc: stopContainerHandler,
-	},*/
+		Pattern:     instanceRoute,
+		HandlerFunc: stopInstanceHandler,
+	},
+
+	{
+		Name:        stopAllInstancesName,
+		Method:      http.MethodDelete,
+		Pattern:     instancesRoute,
+		HandlerFunc: stopAllInstancesHandler,
+	},
 }
