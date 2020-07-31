@@ -1,8 +1,8 @@
 github.com/Microsoft/go-winio v0.4.14 h1:+hMXMk01us9KgxGb7ftKQt2Xpf5hH/yky+TDA+qxleU=
 github.com/Microsoft/go-winio v0.4.14/go.mod h1:qXqCSQ3Xa7+6tgxaGTIe4Kpcdsi+P8jBhyzoq1bpyYA=
-github.com/bruno-anjos/archimedes v0.0.0-20200730121306-72009db0eaa7 h1:mhZmufPx9QnZiZFo0RnUplLthRxVfqRQuxqr2mwB7KA=
 github.com/bruno-anjos/archimedes v0.0.0-20200730121306-72009db0eaa7/go.mod h1:Wo12C7KYQz+Mer0eq1kZMd9uE3HTWqHERHyMOeyAKvE=
-github.com/bruno-anjos/solution-utils v0.0.0-20200711142738-3257ca8b5e39/go.mod h1:S6fgSBlp7Qfd/nQGCR8y+xpnpkB2qz8iiQ9ggsQZPQs=
+github.com/bruno-anjos/scheduler v0.0.0-20200730160240-da949fb91af9/go.mod h1:drx12yzkdMh2iQfv3+tkajahCqBLBzT9reQseNs9skE=
+github.com/bruno-anjos/solution-utils v0.0.0-20200729140846-0b732b78eb19/go.mod h1:S6fgSBlp7Qfd/nQGCR8y+xpnpkB2qz8iiQ9ggsQZPQs=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/docker/distribution v2.7.1+incompatible h1:a5mlkVzth6W5A4fOsS3D2EO5BUmsJpcB+cRlLU7cSug=
