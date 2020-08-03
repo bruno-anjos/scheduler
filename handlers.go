@@ -22,7 +22,7 @@ import (
 )
 
 type (
-	typeInstanceToContainerMapKey = string
+	typeInstanceToContainerMapKey   = string
 	typeInstanceToContainerMapValue = string
 )
 
@@ -54,7 +54,7 @@ func init() {
 	instanceToContainer = sync.Map{}
 }
 
-func getFreePort(protocol string) int {
+func getFreePort(protocol string) string {
 	switch protocol {
 	case utils.TCP:
 		addr, err := net.ResolveTCPAddr(utils.TCP, "0.0.0.0:0")
@@ -74,7 +74,12 @@ func getFreePort(protocol string) int {
 			}
 		}()
 
-		return l.Addr().(*net.TCPAddr).Port
+		natPort, err := nat.NewPort(utils.TCP, strconv.Itoa(l.Addr().(*net.TCPAddr).Port))
+		if err != nil {
+			panic(err)
+		}
+
+		return natPort.Port()
 	case utils.UDP:
 		addr, err := net.ResolveUDPAddr(utils.UDP, "0.0.0.0:0")
 		if err != nil {
@@ -93,7 +98,12 @@ func getFreePort(protocol string) int {
 			}
 		}()
 
-		return l.LocalAddr().(*net.UDPAddr).Port
+		natPort, err := nat.NewPort(utils.UDP, strconv.Itoa(l.LocalAddr().(*net.UDPAddr).Port))
+		if err != nil {
+			panic(err)
+		}
+
+		return natPort.Port()
 	default:
 		panic(errors.Errorf("invalid port protocol: %s", protocol))
 	}
@@ -106,7 +116,7 @@ func generatePortBindings(containerPorts nat.PortSet) (portMap nat.PortMap) {
 
 		hostBinding := nat.PortBinding{
 			HostIP:   utils.DefaultInterface,
-			HostPort: strconv.Itoa(getFreePort(containerPort.Proto())),
+			HostPort: getFreePort(containerPort.Proto()),
 		}
 		portMap[containerPort] = []nat.PortBinding{hostBinding}
 	}
@@ -115,9 +125,12 @@ func generatePortBindings(containerPorts nat.PortSet) (portMap nat.PortMap) {
 }
 
 func startInstanceHandler(w http.ResponseWriter, r *http.Request) {
+	log.Debug("handling start instance")
+
 	var containerInstance api.ContainerInstanceDTO
 	err := json.NewDecoder(r.Body).Decode(&containerInstance)
 	if err != nil {
+		log.Error(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -133,7 +146,16 @@ func startInstanceHandler(w http.ResponseWriter, r *http.Request) {
 	//
 	// Create container and get containers id in response
 	//
+	instanceId := containerInstance.ServiceName + "-" + utils.RandomString(10)
+
+	serviceIdEnvVar := utils.ServiceEnvVarName + "=" + containerInstance.ServiceName
+	instanceIdEnvVar := utils.InstanceEnvVarName + "=" + instanceId
+
+	envVars := []string{serviceIdEnvVar, instanceIdEnvVar}
+	envVars = append(envVars, containerInstance.EnvVars...)
+
 	containerConfig := container.Config{
+		Env:   []string{serviceIdEnvVar, instanceIdEnvVar},
 		Image: containerInstance.ImageName,
 	}
 
@@ -151,10 +173,10 @@ func startInstanceHandler(w http.ResponseWriter, r *http.Request) {
 	//
 	// Add container instance to archimedes
 	//
-	instanceId := containerInstance.ServiceName + "-" + cont.ID[:10]
 	serviceInstancePath := archimedes.GetServiceInstancePath(containerInstance.ServiceName, instanceId)
 	instanceDTO := archimedes.InstanceDTO{
 		PortTranslation: portBindings,
+		Static: containerInstance.Static,
 	}
 
 	req := http_utils.BuildRequest(http.MethodPost, archimedes.DefaultHostPort, serviceInstancePath, instanceDTO)
@@ -185,6 +207,8 @@ func startInstanceHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func stopInstanceHandler(w http.ResponseWriter, r *http.Request) {
+	log.Debug("handling delete instance")
+
 	instanceId := http_utils.ExtractPathVar(r, instanceIdPathVar)
 
 	if instanceId == "" {
@@ -204,9 +228,15 @@ func stopInstanceHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+
+	log.Debugf("deleted instance %s corresponding to container %s", instanceId, contId)
 }
 
 func stopAllInstancesHandler(_ http.ResponseWriter, _ *http.Request) {
+	deleteAllInstances()
+}
+
+func deleteAllInstances()  {
 	log.Debugf("stopping all containers")
 
 	instanceToContainer.Range(func(key, value interface{}) bool {
@@ -237,5 +267,3 @@ func stopAllInstancesHandler(_ http.ResponseWriter, _ *http.Request) {
 		}
 	}
 }
-
-
