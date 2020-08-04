@@ -29,10 +29,13 @@ type (
 const (
 	httpClientTimeout    = 10
 	stopContainerTimeout = 10
+
+	networkName = "scheduler-network"
 )
 
 var (
 	dockerClient        *client.Client
+	networkId           string
 	httpClient          *http.Client
 	instanceToContainer sync.Map
 
@@ -40,6 +43,8 @@ var (
 )
 
 func init() {
+	log.SetLevel(log.DebugLevel)
+
 	var err error
 	dockerClient, err = client.NewEnvClient()
 	if err != nil {
@@ -52,6 +57,37 @@ func init() {
 	}
 
 	instanceToContainer = sync.Map{}
+
+	networkConfig := types.NetworkCreate{
+		CheckDuplicate: false,
+		Attachable:     false,
+	}
+
+	networks, err := dockerClient.NetworkList(context.Background(), types.NetworkListOptions{})
+
+	exists := false
+	for _, network := range networks {
+		if network.Name == networkName {
+			networkId = network.ID
+			exists = true
+			break
+		}
+	}
+
+	if !exists {
+		var resp types.NetworkCreateResponse
+		resp, err = dockerClient.NetworkCreate(context.Background(), networkName, networkConfig)
+		if err != nil {
+			panic(err)
+		}
+
+		networkId = resp.ID
+		log.Debug("created network with id ", networkId)
+	} else {
+		log.Debug("network ", networkName, " already exists")
+	}
+
+	log.SetLevel(log.InfoLevel)
 }
 
 func getFreePort(protocol string) string {
@@ -160,7 +196,7 @@ func startInstanceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	hostConfig := container.HostConfig{
-		NetworkMode:  "host",
+		NetworkMode:  "bridge",
 		PortBindings: portBindings,
 	}
 
@@ -171,13 +207,18 @@ func startInstanceHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	err = dockerClient.NetworkConnect(context.Background(), networkId, cont.ID, nil)
+	if err != nil {
+		panic(err)
+	}
+
 	//
 	// Add container instance to archimedes
 	//
 	serviceInstancePath := archimedes.GetServiceInstancePath(containerInstance.ServiceName, instanceId)
 	instanceDTO := archimedes.InstanceDTO{
 		PortTranslation: portBindings,
-		Static: containerInstance.Static,
+		Static:          containerInstance.Static,
 	}
 
 	req := http_utils.BuildRequest(http.MethodPost, archimedes.DefaultHostPort, serviceInstancePath, instanceDTO)
@@ -237,7 +278,7 @@ func stopAllInstancesHandler(_ http.ResponseWriter, _ *http.Request) {
 	deleteAllInstances()
 }
 
-func deleteAllInstances()  {
+func deleteAllInstances() {
 	log.Debugf("stopping all containers")
 
 	instanceToContainer.Range(func(key, value interface{}) bool {
