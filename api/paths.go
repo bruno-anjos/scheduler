@@ -18,7 +18,8 @@ const (
 )
 
 var (
-	DefaultHostPort = "scheduler" + ":" + strconv.Itoa(Port)
+	SchedulerServiceName = "scheduler"
+	DefaultHostPort = SchedulerServiceName + ":" + strconv.Itoa(Port)
 )
 
 func GetInstancesPath() string {
