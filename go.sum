@@ -8,6 +8,7 @@ github.com/bruno-anjos/solution-utils v0.0.0-20200729140846-0b732b78eb19/go.mod 
 github.com/bruno-anjos/solution-utils v0.0.0-20200803160206-562c9f14e46c h1:nXC7x1KT7w6aTLdpWd39aqZ0hynoQBdHXiEfHqCfZVw=
 github.com/bruno-anjos/solution-utils v0.0.0-20200803160206-562c9f14e46c/go.mod h1:gcb0Ei5ecFs8PGKbC10vJTslG0r+gem3iTtOi7cfhwY=
 github.com/bruno-anjos/solution-utils v0.0.0-20200803160423-4cf841cde3d3/go.mod h1:gcb0Ei5ecFs8PGKbC10vJTslG0r+gem3iTtOi7cfhwY=
+github.com/bruno-anjos/solution-utils v0.0.0-20200804140242-989a419bda22 h1:/VKUFYda/ywq7Z4CGEwE8ozYBQPNJ58uYdu9PSwYV6U=
 github.com/bruno-anjos/solution-utils v0.0.0-20200804140242-989a419bda22/go.mod h1:UVPl35G9oco9keOB9monai4oxJeFb7wxQzVNcfvuRVI=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
