@@ -115,7 +115,7 @@ func generatePortBindings(containerPorts nat.PortSet) (portMap nat.PortMap) {
 	for containerPort := range containerPorts {
 
 		hostBinding := nat.PortBinding{
-			HostIP:   utils.DefaultInterface,
+			HostIP:   utils.LocalhostAddr,
 			HostPort: getFreePort(containerPort.Proto()),
 		}
 		portMap[containerPort] = []nat.PortBinding{hostBinding}
