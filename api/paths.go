@@ -3,8 +3,6 @@ package api
 import (
 	"fmt"
 	"strconv"
-
-	utils "github.com/bruno-anjos/solution-utils"
 )
 
 // Paths
@@ -20,7 +18,7 @@ const (
 )
 
 var (
-	DefaultHostPort = utils.LocalhostAddr + ":" + strconv.Itoa(Port)
+	DefaultHostPort = "scheduler" + ":" + strconv.Itoa(Port)
 )
 
 func GetInstancesPath() string {
