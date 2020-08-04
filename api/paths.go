@@ -20,8 +20,12 @@ const (
 )
 
 var (
-	DefaultHostPort = utils.DefaultInterface + ":" + strconv.Itoa(Port)
+	DefaultHostPort = utils.LocalhostAddr + ":" + strconv.Itoa(Port)
 )
+
+func GetInstancesPath() string {
+	return PrefixPath + InstancesPath
+}
 
 func GetInstancePath(instanceId string) string {
 	return PrefixPath + fmt.Sprintf(InstancePath, instanceId)
