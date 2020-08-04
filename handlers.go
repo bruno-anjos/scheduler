@@ -160,6 +160,7 @@ func startInstanceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	hostConfig := container.HostConfig{
+		NetworkMode:  "host",
 		PortBindings: portBindings,
 	}
 
