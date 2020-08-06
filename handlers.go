@@ -184,6 +184,8 @@ func startInstanceHandler(w http.ResponseWriter, r *http.Request) {
 	//
 	instanceId := containerInstance.ServiceName + "-" + utils.RandomString(10)
 
+	log.Debugf("instance %s has following portBindings: %+v", instanceId, portBindings)
+
 	serviceIdEnvVar := utils.ServiceEnvVarName + "=" + containerInstance.ServiceName
 	instanceIdEnvVar := utils.InstanceEnvVarName + "=" + instanceId
 
@@ -191,7 +193,7 @@ func startInstanceHandler(w http.ResponseWriter, r *http.Request) {
 	envVars = append(envVars, containerInstance.EnvVars...)
 
 	containerConfig := container.Config{
-		Env:   []string{serviceIdEnvVar, instanceIdEnvVar},
+		Env:   envVars,
 		Image: containerInstance.ImageName,
 	}
 
@@ -201,7 +203,7 @@ func startInstanceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cont, err := dockerClient.ContainerCreate(context.Background(), &containerConfig, &hostConfig,
-		nil, "")
+		nil, instanceId)
 	if err != nil {
 		log.Error(dockerClient.ClientVersion())
 		panic(err)
@@ -219,6 +221,7 @@ func startInstanceHandler(w http.ResponseWriter, r *http.Request) {
 	instanceDTO := archimedes.InstanceDTO{
 		PortTranslation: portBindings,
 		Static:          containerInstance.Static,
+		Local:           true,
 	}
 
 	req := http_utils.BuildRequest(http.MethodPost, archimedes.DefaultHostPort, serviceInstancePath, instanceDTO)
@@ -266,6 +269,10 @@ func stopInstanceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	contId := value.(typeInstanceToContainerMapValue)
+	go stopContainerAsync(instanceId, contId)
+}
+
+func stopContainerAsync(instanceId, contId string) {
 	err := dockerClient.ContainerStop(context.Background(), contId, &stopContainerTimeoutVar)
 	if err != nil {
 		panic(err)
