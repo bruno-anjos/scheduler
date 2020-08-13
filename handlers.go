@@ -3,13 +3,16 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"sync"
 	"time"
 
 	archimedes "github.com/bruno-anjos/archimedes/api"
+	deployer "github.com/bruno-anjos/deployer/api"
 	"github.com/bruno-anjos/scheduler/api"
 	utils "github.com/bruno-anjos/solution-utils"
 	"github.com/bruno-anjos/solution-utils/http_utils"
@@ -177,6 +180,10 @@ func startInstanceHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	go startContainerAsync(&containerInstance)
+}
+
+func startContainerAsync(containerInstance *api.ContainerInstanceDTO) {
 	portBindings := generatePortBindings(containerInstance.Ports)
 
 	//
@@ -191,6 +198,23 @@ func startInstanceHandler(w http.ResponseWriter, r *http.Request) {
 
 	envVars := []string{serviceIdEnvVar, instanceIdEnvVar}
 	envVars = append(envVars, containerInstance.EnvVars...)
+
+	out, err := dockerClient.ImagePull(context.Background(), containerInstance.ImageName, types.ImagePullOptions{})
+	if err != nil {
+		panic(err)
+	}
+
+	defer func() {
+		err = out.Close()
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	_, err = io.Copy(os.Stdout, out)
+	if err != nil {
+		panic(err)
+	}
 
 	containerConfig := container.Config{
 		Env:   envVars,
@@ -232,7 +256,7 @@ func startInstanceHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Error(err)
 		}
-		w.WriteHeader(statusCode)
+		log.Fatalf("got status code %d while adding instances to archimedes", statusCode)
 		return
 	}
 
@@ -246,9 +270,14 @@ func startInstanceHandler(w http.ResponseWriter, r *http.Request) {
 
 	instanceToContainer.Store(instanceId, cont.ID)
 
-	log.Debugf("container %s started for instance %s", cont.ID, instanceId)
+	deployerPath := deployer.GetRegisterDeploymentInstancePath(containerInstance.ServiceName, cont.ID)
+	req = http_utils.BuildRequest(http.MethodPost, deployer.DefaultHostPort, deployerPath, nil)
+	status, _ := http_utils.DoRequest(httpClient, req, nil)
+	if status != http.StatusOK {
+		log.Fatalf("got error code %d while registering instance", status)
+	}
 
-	http_utils.SendJSONReplyOK(w, instanceId)
+	log.Debugf("container %s started for instance %s", cont.ID, instanceId)
 }
 
 func stopInstanceHandler(w http.ResponseWriter, r *http.Request) {
