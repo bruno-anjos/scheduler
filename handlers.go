@@ -270,7 +270,7 @@ func startContainerAsync(containerInstance *api.ContainerInstanceDTO) {
 
 	instanceToContainer.Store(instanceId, cont.ID)
 
-	deployerPath := deployer.GetRegisterDeploymentInstancePath(containerInstance.ServiceName, cont.ID)
+	deployerPath := deployer.GetRegisterDeploymentInstancePath(containerInstance.ServiceName, instanceId)
 	req = http_utils.BuildRequest(http.MethodPost, deployer.DefaultHostPort, deployerPath, nil)
 	status, _ := http_utils.DoRequest(httpClient, req, nil)
 	if status != http.StatusOK {
