@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	archimedes "github.com/bruno-anjos/archimedes/api"
 	deployer "github.com/bruno-anjos/deployer/api"
 	"github.com/bruno-anjos/scheduler/api"
 	utils "github.com/bruno-anjos/solution-utils"
@@ -241,14 +240,14 @@ func startContainerAsync(containerInstance *api.ContainerInstanceDTO) {
 	//
 	// Add container instance to archimedes
 	//
-	serviceInstancePath := archimedes.GetServiceInstancePath(containerInstance.ServiceName, instanceId)
-	instanceDTO := archimedes.InstanceDTO{
+	serviceInstancePath := deployer.GetDeploymentInstancePath(containerInstance.ServiceName, instanceId)
+	instanceDTO := api.InstanceDTO{
 		PortTranslation: portBindings,
 		Static:          containerInstance.Static,
 		Local:           true,
 	}
 
-	req := http_utils.BuildRequest(http.MethodPost, archimedes.DefaultHostPort, serviceInstancePath, instanceDTO)
+	req := http_utils.BuildRequest(http.MethodPost, deployer.DefaultHostPort, serviceInstancePath, instanceDTO)
 	statusCode, _ := http_utils.DoRequest(httpClient, req, nil)
 
 	if statusCode != http.StatusOK {
@@ -269,13 +268,6 @@ func startContainerAsync(containerInstance *api.ContainerInstanceDTO) {
 	}
 
 	instanceToContainer.Store(instanceId, cont.ID)
-
-	deployerPath := deployer.GetRegisterDeploymentInstancePath(containerInstance.ServiceName, instanceId)
-	req = http_utils.BuildRequest(http.MethodPost, deployer.DefaultHostPort, deployerPath, nil)
-	status, _ := http_utils.DoRequest(httpClient, req, nil)
-	if status != http.StatusOK {
-		log.Fatalf("got error code %d while registering instance", status)
-	}
 
 	log.Debugf("container %s started for instance %s", cont.ID, instanceId)
 }
